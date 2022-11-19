@@ -151,6 +151,8 @@ fn draw_player(player: &Player, world: &World) {
     draw_rectangle_lines(pos.x, pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, 1., GREEN)
 }
 
+// Une proc macro https://doc.rust-lang.org/reference/procedural-macros.html
+// qui permet de générer le code du moteur de jeu
 #[macroquad::main("Duel")]
 async fn main() {
     let stage = init_stage();
@@ -171,6 +173,9 @@ async fn main() {
         collider: world.add_actor(vec2(50.0, 80.0), PLAYER_WIDTH as i32, PLAYER_HEIGHT as i32),
         speed: vec2(0., 0.),
     };
+
+    // fin de l'initialisation
+    // début de la boucle de jeu
     loop {
         clear_background(LIGHTGRAY);
 
