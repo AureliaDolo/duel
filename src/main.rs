@@ -3,55 +3,52 @@ use macroquad_platformer::{Actor, Tile, World};
 
 // Source d'inspiration https://github.com/not-fl3/macroquad/blob/master/examples/platformer.rs
 
+/// Alias de type: https://doc.rust-lang.org/reference/items/type-aliases.html
 type Stage = Vec<[Tile; 16]>;
 
-enum DuelError {
-    PlayerInTheGround,
-}
-
+/// Constantes pour les tailles des elements
 const BLOCK_SIZE: f32 = 16.;
-const DELTA: f32 = 1.;
 const PLAYER_WIDTH: f32 = 10.;
 const PLAYER_HEIGHT: f32 = 15.;
 
-// TODO player
-// TODO Weapon
-// TODO exit
-
+/// Initialisation de la carte
+/// TODO choisir un format de fichier et le parser
+/// TODO ajouter des plateformes
+/// TODO ajouter plusieurs niveaux avec un début et une fin
 fn init_stage() -> Stage {
     use Tile::*;
     vec![
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
-            Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Empty, Empty, Empty, Solid,
         ],
         [
             Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid,
@@ -88,25 +85,15 @@ fn init_stage() -> Stage {
     ]
 }
 
-struct WorldScreen {
-    screen_width: f32,
-    screen_height: f32,
-}
-
+/// Le joueur
 struct Player {
+    /// index du joueur dans le monde
     collider: Actor,
+    /// vitesse dans l'axe x et l'axe y
     speed: Vec2,
 }
 
-impl WorldScreen {
-    fn new() -> WorldScreen {
-        WorldScreen {
-            screen_width: screen_width(),
-            screen_height: screen_height(),
-        }
-    }
-}
-
+/// dessine le decor
 fn draw_stage(stage: &Stage) {
     for (y, line) in stage.iter().enumerate() {
         for (x, block) in line.iter().enumerate() {
@@ -128,9 +115,10 @@ fn draw_stage(stage: &Stage) {
     }
 }
 
-fn draw_mire(world: &WorldScreen, camera: &Camera2D) {
-    let middle_height = world.screen_height / 2.;
-    let middle_width = world.screen_width / 2.;
+/// Dissine une mire au milieu de ce que voit la camera
+fn draw_mire(camera: &Camera2D) {
+    let middle_height = screen_height() / 2.;
+    let middle_width = screen_width() / 2.;
 
     let Vec2 {
         x: middle_width_w,
@@ -156,6 +144,8 @@ fn draw_mire(world: &WorldScreen, camera: &Camera2D) {
     );
 }
 
+/// dessiner le joueur
+/// TODO utiliser un/des sprites
 fn draw_player(player: &Player, world: &World) {
     let pos = world.actor_pos(player.collider);
     draw_rectangle_lines(pos.x, pos.y, PLAYER_WIDTH, PLAYER_HEIGHT, 1., GREEN)
@@ -164,6 +154,10 @@ fn draw_player(player: &Player, world: &World) {
 #[macroquad::main("Duel")]
 async fn main() {
     let stage = init_stage();
+
+    // Utiliser une camera permet d'éviter d'avoir à s'occuper des transformation
+    // coordonnée de l'éran vs coordonnées du monde
+    // TODO utiliser une camera 3D pour pourvoir gérer plusieurs plans qui défilent
     let camera = Camera2D::from_display_rect(Rect::new(
         0.,
         0.,
@@ -174,22 +168,21 @@ async fn main() {
     let mut world = World::new();
 
     let mut player = Player {
-        collider: world.add_actor(vec2(50.0, 80.0), 8, 8),
+        collider: world.add_actor(vec2(50.0, 80.0), PLAYER_WIDTH as i32, PLAYER_HEIGHT as i32),
         speed: vec2(0., 0.),
     };
     loop {
         clear_background(LIGHTGRAY);
-        let world_screen = WorldScreen::new();
 
         world.add_static_tiled_layer(
             stage.iter().cloned().flatten().collect(),
             BLOCK_SIZE,
             BLOCK_SIZE,
-            16,
+            stage.len(),
             1,
         );
         draw_stage(&stage);
-        draw_mire(&world_screen, &camera);
+        draw_mire(&camera);
         draw_player(&player, &world);
 
         // player movement control
@@ -198,19 +191,27 @@ async fn main() {
             let on_ground = world.collide_check(player.collider, pos + vec2(0., 1.));
 
             if !on_ground {
+                // TODO expérimenter en changeant cette valeur
+                // Quelle mécanique change ?
                 player.speed.y += 500. * get_frame_time();
             }
 
             if is_key_down(KeyCode::Right) {
+                // TODO expérimenter en changeant cette valeur
+                // Quelle mécanique change ?
                 player.speed.x = 100.0;
             } else if is_key_down(KeyCode::Left) {
+                // TODO expérimenter en changeant cette valeur
+                // Quelle mécanique change ?
                 player.speed.x = -100.0;
             } else {
                 player.speed.x = 0.;
             }
 
             if is_key_pressed(KeyCode::Space) && on_ground {
-                player.speed.y = -120.;
+                // TODO expérimenter en changeant cette valeur
+                // Quelle mécanique change ?
+                player.speed.y = -200.;
             }
 
             world.move_h(player.collider, player.speed.x * get_frame_time());
