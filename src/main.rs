@@ -19,8 +19,8 @@ fn init_stage() -> Stage {
     use Tile::*;
     vec![
         [
-            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Solid,
+            Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid, Solid,
+            Solid, Solid, Solid, Solid,
         ],
         [
             Solid, Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
@@ -39,12 +39,12 @@ fn init_stage() -> Stage {
             Empty, Empty, Empty, Solid,
         ],
         [
-            Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
+            Solid, Empty, Empty, Empty, Solid, Solid, Solid, Empty, Empty, Empty, Empty, Empty,
             Empty, Empty, Empty, Solid,
         ],
         [
             Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
-            Empty, Empty, Empty, Solid,
+            Empty, Empty, Solid, Solid,
         ],
         [
             Solid, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty,
@@ -194,6 +194,8 @@ async fn main() {
         {
             let pos = world.actor_pos(player.collider);
             let on_ground = world.collide_check(player.collider, pos + vec2(0., 1.));
+            let touching_left = world.collide_check(player.collider, pos + vec2(-1.1,0.));
+            let touching_right = world.collide_check(player.collider, pos + vec2(1.1,0.));
 
             if !on_ground {
                 // TODO expérimenter en changeant cette valeur
@@ -213,10 +215,14 @@ async fn main() {
                 player.speed.x = 0.;
             }
 
-            if is_key_pressed(KeyCode::Space) && on_ground {
+            if (is_key_down(KeyCode::Space) || is_key_down(KeyCode::Up)) && on_ground {
                 // TODO expérimenter en changeant cette valeur
                 // Quelle mécanique change ?
                 player.speed.y = -200.;
+            }
+
+            if is_key_pressed(KeyCode::Space) && (touching_left || touching_right) {
+                player.speed.y = -150.;
             }
 
             world.move_h(player.collider, player.speed.x * get_frame_time());
