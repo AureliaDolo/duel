@@ -176,16 +176,11 @@ async fn main() {
 
     // fin de l'initialisation
     // début de la boucle de jeu
+    let static_collider = stage.iter().cloned().flatten().collect();
+    world.add_static_tiled_layer(static_collider, BLOCK_SIZE, BLOCK_SIZE, stage.len(), 1);
+
     loop {
         clear_background(LIGHTGRAY);
-
-        world.add_static_tiled_layer(
-            stage.iter().cloned().flatten().collect(),
-            BLOCK_SIZE,
-            BLOCK_SIZE,
-            stage.len(),
-            1,
-        );
         draw_stage(&stage);
         draw_mire(&camera);
         draw_player(&player, &world);
