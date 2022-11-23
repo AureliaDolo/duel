@@ -184,6 +184,7 @@ async fn main() {
         draw_stage(&stage);
         draw_mire(&camera);
         draw_player(&player, &world);
+        let frame_time = get_frame_time();
 
         // player movement control
         {
@@ -195,7 +196,7 @@ async fn main() {
             if !on_ground {
                 // TODO expérimenter en changeant cette valeur
                 // Quelle mécanique change ?
-                player.speed.y += 500. * get_frame_time();
+                player.speed.y += 500. * frame_time;
             }
 
             if is_key_down(KeyCode::Right) {
@@ -220,8 +221,8 @@ async fn main() {
                 player.speed.y = -150.;
             }
 
-            world.move_h(player.collider, player.speed.x * get_frame_time());
-            world.move_v(player.collider, player.speed.y * get_frame_time());
+            world.move_h(player.collider, player.speed.x * frame_time);
+            world.move_v(player.collider, player.speed.y * frame_time);
         }
         next_frame().await
     }
